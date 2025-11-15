@@ -167,7 +167,7 @@ borg_poke_backup_host() {
         warn "${BACKUP_HOST} is unreachable! Attempting Wake on LAN."
         local backup_host_ip=$(/usr/bin/getent hosts "${BACKUP_HOST}" | /usr/bin/awk '{ print $1 }')
         if [ $? -ne 0 ]; then
-            error "Unable to resove hostname."
+            error "Unable to resolve hostname."
             exit 1
         fi
         info "DNS reports ${BACKUP_HOST} at ${backup_host_ip}"
