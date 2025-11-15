@@ -171,7 +171,7 @@ borg_poke_backup_host() {
             exit 1
         fi
         info "DNS reports ${BACKUP_HOST} at ${backup_host_ip}"
-        capture /usr/bin/wakeonlan -i ${backup_host_ip} ${BACKUP_MAC} || exit 1
+        capture /usr/bin/wakeonlan -i "${backup_host_ip}" "${BACKUP_MAC}" || exit 1
         # give it some time to boot up...
         if [ ! -z "${BACKUP_LOG_VERBOSE}" ]; then
             printf 'Waiting for host to come online...'
