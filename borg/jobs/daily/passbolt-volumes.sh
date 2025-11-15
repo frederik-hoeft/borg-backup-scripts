@@ -39,7 +39,7 @@ capture foreach_backup_host /usr/bin/borg create    \
     --exclude-caches                                \
                                                     \
     ::"${container_name}-{now}"                     \
-    ${volume_root} || {
+    "${volume_root}" || {
         restore_current
         abort_current
     }
