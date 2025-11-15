@@ -1,0 +1,4 @@
+borg.hosts.json
+*.secrets
+*.log
+*.tmp
