@@ -161,7 +161,7 @@ capture() {
 borg_poke_backup_host() {
     info "Checking if ${BACKUP_HOST} is up..."
     local wake_on_lan=0
-    ping -c 1 -W 10 ${BACKUP_HOST} > /dev/null;
+    ping -c 1 -W 10 "${BACKUP_HOST}" > /dev/null;
     
     if [ $? -ne 0 ]; then
         warn "${BACKUP_HOST} is unreachable! Attempting Wake on LAN."
