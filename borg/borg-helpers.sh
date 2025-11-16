@@ -302,10 +302,16 @@ foreach_backup_host() {
         return 1
     }
     
+    # Validate that host_count is a non-empty integer
+    if ! [[ "$host_count" =~ ^[0-9]+$ ]]; then
+        error "foreach_backup_host: host_count ('${host_count}') is not a valid integer"
+        return 1
+    fi
+    
     info "foreach_backup_host: processing ${host_count} backup hosts"
     
     local i=0
-    while [ $i -lt $host_count ]; do
+    while [ "$i" -lt "$host_count" ]; do
         # extract host configuration
         local hostname port wake_on_lan_mac borg_rsh borg_repo_root
         
