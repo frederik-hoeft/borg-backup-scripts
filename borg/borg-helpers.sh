@@ -150,13 +150,13 @@ capture() {
     # define local first. doing it inline will cause the exit code to be lost
     local output
     output="$("$@" 2>&1)"
-    local exit_code=$?
+    local rc=$?
     echo "${output}" | tee -a "${BACKUP_LOG_FILE}" >> "${BACKUP_LOG_FILE_TEMP}"
     if [ -n "${BACKUP_LOG_VERBOSE}" ]; then
         echo "${output}"
     fi
-    if [ ${exit_code} -ne 0 ]; then
-        local error="ERROR: Previous command failed with exit code ${exit_code}."
+    if [ ${rc} -ne 0 ]; then
+        local error="ERROR: Previous command failed with exit code ${rc}."
         echo "${error}" | tee -a "${BACKUP_LOG_FILE}" >> "${BACKUP_LOG_FILE_TEMP}"
         if [ -n "${BACKUP_LOG_VERBOSE}" ]; then
             echo "${error}"
@@ -166,7 +166,7 @@ capture() {
         fi
     fi
     # don't hard-exit here, let the caller decide (for cleanup)
-    return "${exit_code}"
+    return "${rc}"
 }
 
 # ensure remote host is up and reachable
@@ -177,8 +177,11 @@ borg_poke_backup_host() {
 
     if ! ping -c 1 -W 10 "${BACKUP_HOST}" > /dev/null; then
         warn "${BACKUP_HOST} is unreachable! Attempting Wake on LAN."
-        local backup_host_ip=$(/usr/bin/getent hosts "${BACKUP_HOST}" | /usr/bin/awk '{ print $1 }')
-        if [ $? -ne 0 ]; then
+        local backup_host_ip
+        local rc
+        backup_host_ip=$(/usr/bin/getent hosts "${BACKUP_HOST}" | /usr/bin/awk '{ print $1 }')
+        rc=$?
+        if [ ${rc} -ne 0 ] || [ -z "${backup_host_ip}" ]; then
             error "Unable to resolve hostname."
             exit 1
         fi
@@ -324,7 +327,7 @@ foreach_backup_host() {
         
         # execute the command
         "${cmd}" "${args[@]+"${args[@]}"}"
-        local exit_code=$?
+        local rc=$?
         
         # clean up environment variables
         unset BACKUP_HOST BACKUP_PORT BACKUP_MAC BORG_RSH BACKUP_REPO_ROOT
@@ -333,9 +336,9 @@ foreach_backup_host() {
         fi
         
         # stop on first failure
-        if [ $exit_code -ne 0 ]; then
-            error "foreach_backup_host: command failed with exit code $exit_code for host ${hostname}"
-            return $exit_code
+        if [ ${rc} -ne 0 ]; then
+            error "foreach_backup_host: command failed with exit code ${rc} for host ${hostname}"
+            return ${rc}
         fi
         
         i=$((i + 1))

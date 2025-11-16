@@ -64,7 +64,7 @@ cp borg/borg.secrets.template borg/borg.secrets
 
 Edit `borg/borg.hosts.json` to define your backup hosts:
 
-> **Note:** The example below uses `sshpass` to provide the password non-interactively (look for ([Pp])assphrase prompt) in the `borg_rsh` field.
+> **Note:** The example below uses `sshpass` to provide the password non-interactively (look for `([Pp])assphrase` prompt) in the `borg_rsh` field.
 
 ```json
 [
