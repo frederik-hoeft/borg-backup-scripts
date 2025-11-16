@@ -104,7 +104,8 @@ borg_cleanup() {
         
         if [ "${wol_state}" = "1" ]; then
             info "${hostname} was not running before backup. Triggering shutdown..."
-            # shutdown is the only command we are allowed to run (:
+            # shutdown is the only command we are allowed to run (configure in authorized_keys on backup host)
+            # we use sshpass to provide the password non-interactively (look for ([Pp])assphrase prompt)
             capture /usr/bin/sshpass -f/root/.ssh/pass -P assphrase /usr/bin/ssh "root@${hostname}" '/usr/bin/shutdown -h now' || {
                 error "Failed to shutdown ${hostname}"
                 continue
@@ -173,9 +174,8 @@ capture() {
 borg_poke_backup_host() {
     info "Checking if ${BACKUP_HOST} is up..."
     local wake_on_lan=0
-    ping -c 1 -W 10 "${BACKUP_HOST}" > /dev/null;
-    
-    if [ $? -ne 0 ]; then
+
+    if ! ping -c 1 -W 10 "${BACKUP_HOST}" > /dev/null; then
         warn "${BACKUP_HOST} is unreachable! Attempting Wake on LAN."
         local backup_host_ip=$(/usr/bin/getent hosts "${BACKUP_HOST}" | /usr/bin/awk '{ print $1 }')
         if [ $? -ne 0 ]; then
@@ -199,7 +199,7 @@ borg_poke_backup_host() {
             if [ -n "${BACKUP_LOG_VERBOSE}" ]; then
                 printf '.'
             fi
-            attempt=$(($attempt+1))
+            attempt=$((attempt + 1))
             sleep 2
         done
         if [ -n "${BACKUP_LOG_VERBOSE}" ]; then
@@ -210,9 +210,8 @@ borg_poke_backup_host() {
         wake_on_lan=1
     fi
     
-    /usr/bin/nc -w 3 -z "${BACKUP_HOST}" "${BACKUP_PORT}"
-    
-    if [ $? -ne 0 ]; then
+    # verify ssh connectivity
+    if ! /usr/bin/nc -w 3 -z "${BACKUP_HOST}" "${BACKUP_PORT}"; then
         error "${BACKUP_HOST} is unreachable via ssh"
         exit 3
     fi
@@ -346,5 +345,5 @@ foreach_backup_host() {
     return 0
 }
 
-# error handling
+# global error handling
 trap 'error Backup interrupted >&2; exit 2' INT TERM

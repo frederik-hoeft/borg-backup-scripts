@@ -57,7 +57,7 @@ info 'Ok. Proceeding with backup...'
 # 1: script failed, but backup should continue with subsequent scripts
 # 2: script failed, and backup should stop immediately
 for backup_script in "${BACKUP_SCRIPT_JOBS}/${BACKUP_FREQUENCY}/"*.sh; do
-    [ -e "$backup_script" ] || continue
+    [ -x "$backup_script" ] || continue
     "${backup_script}" || try_panic $?
 done
 
