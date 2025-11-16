@@ -172,6 +172,10 @@ capture() {
 # ensure remote host is up and reachable
 # requires static ARP entry for routing when target host is offline
 borg_poke_backup_host() {
+    if [ -z "${BACKUP_HOST:-}" ] || [ -z "${BACKUP_PORT:-}" ] || [ -z "${BACKUP_MAC:-}" ]; then
+        error "BACKUP_HOST, BACKUP_PORT, and BACKUP_MAC must be set. borg_poke_backup_host requires these to be defined."
+        exit 1
+    fi
     info "Checking if ${BACKUP_HOST} is up..."
     local wake_on_lan=0
 
@@ -182,7 +186,7 @@ borg_poke_backup_host() {
         backup_host_ip=$(/usr/bin/getent hosts "${BACKUP_HOST}" | /usr/bin/awk '{ print $1 }')
         rc=$?
         if [ ${rc} -ne 0 ] || [ -z "${backup_host_ip}" ]; then
-            error "Unable to resolve hostname."
+            error "Unable to resolve hostname ${BACKUP_HOST} to an IP address"
             exit 1
         fi
         info "DNS reports ${BACKUP_HOST} at ${backup_host_ip}"

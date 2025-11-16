@@ -2,6 +2,7 @@
 
 # set bash options, fail on unset variables, and pipefail
 set -uo pipefail
+shopt -s nullglob
 
 # require single parameter (daily, weekly, monthly)
 if [ "$#" -ne 1 ]; then
@@ -57,7 +58,7 @@ info 'Ok. Proceeding with backup...'
 # 1: script failed, but backup should continue with subsequent scripts
 # 2: script failed, and backup should stop immediately
 for backup_script in "${BACKUP_SCRIPT_JOBS}/${BACKUP_FREQUENCY}/"*.sh; do
-    [ -f "$backup_script" ] && [ -x "$backup_script" ] || continue
+    [ -f "${backup_script}" ] && [ -x "${backup_script}" ] || continue
     "${backup_script}" || try_panic $?
 done
 
