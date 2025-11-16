@@ -65,7 +65,7 @@ abort_all() {
 # parameters: None
 # returns: exits with code 1 if BORG_PASSPHRASE is not set
 require_borg_passphrase() {
-    if [ -z "${BORG_PASSPHRASE}" ]; then
+    if [ -z "${BORG_PASSPHRASE:-}" ]; then
         error 'required variable BORG_PASSPHRASE is not set'
         abort_current
     fi
