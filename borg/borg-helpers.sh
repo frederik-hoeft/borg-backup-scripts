@@ -128,7 +128,7 @@ try_panic() {
     echo "${message}" | /usr/bin/tee -a "${BACKUP_LOG_FILE}"
     # TODO: send an email
     # if the last exit code was higher than 1, we need to abort the backup
-    if [ $1 -gt 1 ]; then
+    if [ "${1:-0}" -gt 1 ]; then
         create_log_entry 'FATAL' 'cleaning up and aborting backup' | /usr/bin/tee -a "${BACKUP_LOG_FILE}"
         borg_cleanup
         exit 1
