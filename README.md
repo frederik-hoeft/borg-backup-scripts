@@ -64,13 +64,14 @@ cp borg/borg.secrets.template borg/borg.secrets
 
 Edit `borg/borg.hosts.json` to define your backup hosts:
 
+> **Note:** The example below uses `sshpass` to provide the password non-interactively (look for ([Pp])assphrase prompt) in the `borg_rsh` field.
+
 ```json
 [
     {
         "hostname": "backup-host.example.com",
         "port": 22,
         "wake_on_lan_mac": "00:11:22:33:44:55",
-        // sample, using sshpass to provide the password non-interactively (look for ([Pp])assphrase prompt)
         "borg_rsh": "/usr/bin/sshpass -f/root/.ssh/pass -P assphrase /usr/bin/ssh",
         "borg_repo_root": "/path/to/borg/repositories"
     }
