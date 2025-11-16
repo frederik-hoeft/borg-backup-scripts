@@ -13,7 +13,10 @@ container_name='jellyfin'
 container_root="${DOCKER_ROOT}/containers/${container_name}"
 volume_root="${DOCKER_ROOT}/volumes/${container_name}"
 
-# bring down container
+restore_current() {
+    docker_up "${container_name}" "${container_root}" || abort_current
+}
+
 docker_down "${container_name}" "${container_root}" || abort_current
 
 info 'Starting backup'
@@ -57,7 +60,3 @@ capture foreach_backup_host /usr/bin/borg compact || {
 }
 
 restore_current
-
-restore_current() {
-    docker_up "${container_name}" "${container_root}" || abort_current
-}

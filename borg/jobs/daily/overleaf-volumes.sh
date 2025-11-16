@@ -12,9 +12,15 @@ container_name='overleaf'
 container_root="${DOCKER_ROOT}/containers/${container_name}"
 volume_root="${DOCKER_ROOT}/volumes/${container_name}"
 
-info "Attempting to stop '${container_name}' docker container..."
+restore_current() {
+    info "Attempting to start '${container_name}' docker container group..."
+    capture /usr/bin/su -c "${container_root}/bin/docker-compose up -d" "${DOCKER_USER}" || abort_current
+    info "Successfully started '${container_name}' docker container group"
+}
 
-# bring down container (specific to overleaf setup)
+info "Attempting to stop '${container_name}' docker container group..."
+
+# bring down container group (specific to overleaf setup)
 capture /usr/bin/su -c "${container_root}/bin/docker-compose down" "${DOCKER_USER}" || abort_current
 
 info 'Starting backup'
@@ -62,9 +68,3 @@ capture foreach_backup_host /usr/bin/borg compact || {
 }
 
 restore_current
-
-restore_current() {
-    info "Attempting to restore '${container_name}' docker container..."
-    capture /usr/bin/su -c "${container_root}/bin/docker-compose up -d" "${DOCKER_USER}" || abort_current
-    info "Successfully restored '${container_name}' docker container"
-}

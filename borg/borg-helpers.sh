@@ -17,7 +17,7 @@ write_log() {
     local message=$(create_log_entry "${1}" "${2}")
     echo "${message}" | tee -a "${BACKUP_LOG_FILE}" >> "${BACKUP_LOG_FILE_TEMP}"
     # if verbose, write to stdout, always write errors
-    if [ -n "${BACKUP_LOG_VERBOSE}" ] || [ "${1}" == 'ERROR' ]; then
+    if [ -n "${BACKUP_LOG_VERBOSE}" ] || [ "${1}" = 'ERROR' ]; then
         echo "${message}"
     fi
 }
@@ -318,7 +318,7 @@ foreach_backup_host() {
         export BACKUP_REPO_ROOT="${borg_repo_root}"
         
         # construct BORG_REPO if REPOSITORY_NAME is set
-        if [ -n "${REPOSITORY_NAME}" ]; then
+        if [ -n "${REPOSITORY_NAME:-}" ]; then
             export BORG_REPO="ssh://borg@${hostname}:${port}${borg_repo_root}/${REPOSITORY_NAME}"
         fi
         
@@ -328,7 +328,7 @@ foreach_backup_host() {
         
         # clean up environment variables
         unset BACKUP_HOST BACKUP_PORT BACKUP_MAC BORG_RSH BACKUP_REPO_ROOT
-        if [ -n "${REPOSITORY_NAME}" ]; then
+        if [ -n "${REPOSITORY_NAME:-}" ]; then
             unset BORG_REPO
         fi
         
