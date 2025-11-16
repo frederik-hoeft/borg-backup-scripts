@@ -93,7 +93,6 @@ Each backup job also requires its own secrets file (e.g., `jobs/seafile.secrets`
 export BORG_PASSPHRASE='your-borg-passphrase'
 ```
 
-Similarly, each backup job is expected to source the `BORG_PASSPHRASE` variable from its own secrets file.
 
 ### 4. Dependencies
 
