@@ -190,7 +190,7 @@ borg_poke_backup_host() {
         fi
         local attempt=0
         local max_attempts=120
-        until $(/usr/bin/nc -w 3 -z "${BACKUP_HOST}" "${BACKUP_PORT}"); do
+        until /usr/bin/nc -w 3 -z "${BACKUP_HOST}" "${BACKUP_PORT}"; do
             if [ ${attempt} -eq ${max_attempts} ]; then
                 printf '\n'
                 error "Failed to wake up ${BACKUP_HOST}."
