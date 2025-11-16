@@ -17,7 +17,7 @@ write_log() {
     local message=$(create_log_entry "${1}" "${2}")
     echo "${message}" | tee -a "${BACKUP_LOG_FILE}" >> "${BACKUP_LOG_FILE_TEMP}"
     # if verbose, write to stdout, always write errors
-    if [ ! -z "${BACKUP_LOG_VERBOSE}" ] || [ "${1}" == 'ERROR' ]; then
+    if [ -n "${BACKUP_LOG_VERBOSE}" ] || [ "${1}" == 'ERROR' ]; then
         echo "${message}"
     fi
 }
@@ -61,6 +61,18 @@ abort_all() {
     exit 2
 }
 
+# ensure that BORG_PASSPHRASE is set, otherwise abort current script
+# parameters: None
+# returns: exits with code 1 if BORG_PASSPHRASE is not set
+require_borg_passphrase() {
+    if [ -z "${BORG_PASSPHRASE}" ]; then
+        error 'required variable BORG_PASSPHRASE is not set'
+        abort_current
+    fi
+}
+
+# shutdown any backup hosts that were woken up for the backup
+# parameters: None
 borg_cleanup() {
     if [ -z "${BACKUP_WOL_STATE_DIR}" ]; then
         warn "BACKUP_WOL_STATE_DIR not set, skipping cleanup"
@@ -131,7 +143,7 @@ try_panic() {
 capture() {
     local command_log_entry=$(create_log_entry 'EXEC' "$*")
     echo "${command_log_entry}" | tee -a "${BACKUP_LOG_FILE}" >> "${BACKUP_LOG_FILE_TEMP}"
-    if [ ! -z "${BACKUP_LOG_VERBOSE}" ]; then
+    if [ -n "${BACKUP_LOG_VERBOSE}" ]; then
         echo "${command_log_entry}"
     fi
     # define local first. doing it inline will cause the exit code to be lost
@@ -139,13 +151,13 @@ capture() {
     output="$("$@" 2>&1)"
     local exit_code=$?
     echo "${output}" | tee -a "${BACKUP_LOG_FILE}" >> "${BACKUP_LOG_FILE_TEMP}"
-    if [ ! -z "${BACKUP_LOG_VERBOSE}" ]; then
+    if [ -n "${BACKUP_LOG_VERBOSE}" ]; then
         echo "${output}"
     fi
     if [ ${exit_code} -ne 0 ]; then
         local error="ERROR: Previous command failed with exit code ${exit_code}."
         echo "${error}" | tee -a "${BACKUP_LOG_FILE}" >> "${BACKUP_LOG_FILE_TEMP}"
-        if [ ! -z "${BACKUP_LOG_VERBOSE}" ]; then
+        if [ -n "${BACKUP_LOG_VERBOSE}" ]; then
             echo "${error}"
         else
             # dump the log file to stdout if we are not verbose (for cron)
@@ -173,7 +185,7 @@ borg_poke_backup_host() {
         info "DNS reports ${BACKUP_HOST} at ${backup_host_ip}"
         capture /usr/bin/wakeonlan -i "${backup_host_ip}" "${BACKUP_MAC}" || exit 1
         # give it some time to boot up...
-        if [ ! -z "${BACKUP_LOG_VERBOSE}" ]; then
+        if [ -n "${BACKUP_LOG_VERBOSE}" ]; then
             printf 'Waiting for host to come online...'
         fi
         local attempt=0
@@ -184,13 +196,13 @@ borg_poke_backup_host() {
                 error "Failed to wake up ${BACKUP_HOST}."
                 exit 2
             fi
-            if [ ! -z "${BACKUP_LOG_VERBOSE}" ]; then
+            if [ -n "${BACKUP_LOG_VERBOSE}" ]; then
                 printf '.'
             fi
             attempt=$(($attempt+1))
             sleep 2
         done
-        if [ ! -z "${BACKUP_LOG_VERBOSE}" ]; then
+        if [ -n "${BACKUP_LOG_VERBOSE}" ]; then
             printf '\n'
         fi
     
@@ -307,17 +319,17 @@ foreach_backup_host() {
         export BACKUP_REPO_ROOT="${borg_repo_root}"
         
         # construct BORG_REPO if REPOSITORY_NAME is set
-        if [ ! -z "${REPOSITORY_NAME}" ]; then
+        if [ -n "${REPOSITORY_NAME}" ]; then
             export BORG_REPO="ssh://borg@${hostname}:${port}${borg_repo_root}/${REPOSITORY_NAME}"
         fi
         
         # execute the command
-        "${cmd}" "${args[@]}"
+        "${cmd}" "${args[@]+"${args[@]}"}"
         local exit_code=$?
         
         # clean up environment variables
         unset BACKUP_HOST BACKUP_PORT BACKUP_MAC BORG_RSH BACKUP_REPO_ROOT
-        if [ ! -z "${REPOSITORY_NAME}" ]; then
+        if [ -n "${REPOSITORY_NAME}" ]; then
             unset BORG_REPO
         fi
         

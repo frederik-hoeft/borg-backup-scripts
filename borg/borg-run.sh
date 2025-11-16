@@ -26,7 +26,7 @@ export BACKUP_SCRIPT_JOBS="${BACKUP_SCRIPT_HOME}/jobs"
 
 # source config and helper functions
 . "${BACKUP_SCRIPT_HOME}/borg.conf"
-. "${BACKUP_SCRIPT_HOME}/borg.helpers"
+. "${BACKUP_SCRIPT_HOME}/borg-helpers.sh"
 . "${BACKUP_SCRIPT_HOME}/borg.secrets"
 
 # clear the log file used for capturing output

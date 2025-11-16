@@ -11,59 +11,43 @@ This repository contains a collection of bash scripts designed to automate backu
 - **Multi-Host Support**: Execute backup operations across multiple remote backup hosts
 - **Wake-on-LAN Integration**: Automatically wake up backup hosts when needed and shut them down after completion
 - **Docker Container Backups**: Specialized scripts for backing up Docker container volumes
-- **Flexible Scheduling**: Daily, weekly, and monthly backup job organization
+- **Modular Architecture**: Organized helper functions in separate modules for maintainability
+- **Flexible Scheduling**: Daily, weekly, and monthly backup job organization with parameter validation
 - **Comprehensive Logging**: Detailed logging with verbose mode and error handling
 - **Error Recovery**: Graceful error handling with cleanup procedures
 - **JSON Configuration**: Host configuration management through JSON files
+- **Environment Validation**: Automatic validation of required environment variables
 
 ## Project Structure
 
 ```
 borg/
 ├── borg.conf                    # Global configuration and environment variables
-├── borg.helpers                 # Helper functions and utilities
-├── borg-run.sh                  # Main execution script
+├── borg-helpers.sh              # Core helper functions and utilities
+├── borg-run.sh                  # Main execution script with frequency validation
 ├── borg.hosts.json.template     # Template for host configuration
 ├── borg.secrets.template        # Template for sensitive configuration
 ├── daily.borg.cron             # Daily cron job configuration
 ├── weekly.borg.cron             # Weekly cron job configuration
 ├── monthly.borg.cron            # Monthly cron job configuration
+├── modules/                     # Modular helper libraries
+│   └── docker-helpers.sh        # Docker container management functions
 └── jobs/
-    ├── daily/                   # Daily backup scripts (example)
+    ├── daily/                   # Daily backup scripts
     │   ├── overleaf-volumes.sh
     │   ├── passbolt-volumes.sh
     │   └── seafile-volumes.sh
-    ├── weekly/                  # Weekly backup scripts (example)
+    ├── weekly/                  # Weekly backup scripts
     │   ├── jellyfin-volumes.sh
     │   └── teamspeak-volumes.sh
     └── monthly/                 # Monthly backup scripts (placeholder)
 ```
 
-## Core Components
-
-### Configuration Files
+## Configuration Files
 
 - **borg.conf**: Contains global environment variables including log file paths, verbose settings, and WOL state directory
 - **borg.hosts.json**: Defines backup host configurations including hostnames, ports, MAC addresses, SSH settings, and repository paths
 - **borg.secrets**: Contains system configuration data such as the username and path of the Docker user
-
-### Helper Functions (borg.helpers)
-
-The helper library provides essential functions:
-
-- **Logging Functions**: `info()`, `warn()`, `error()` with configurable verbosity
-- **Error Handling**: `abort_current()`, `abort_all()`, `try_panic()` for graceful error management
-- **Command Execution**: `capture()` for logging command output and handling exit codes
-- **Host Management**: `borg_poke_backup_host()` for Wake-on-LAN and connectivity checks
-- **Multi-Host Execution**: `foreach_backup_host()` for executing commands across all configured hosts
-
-### Backup Job Scripts
-
-Each backup script follows a standard pattern:
-1. Container shutdown and volume backup
-2. BorgBackup repository operations (create, prune, compact)
-3. Container restoration
-4. Error handling and cleanup
 
 ## Setup Instructions
 
@@ -101,6 +85,12 @@ export DOCKER_USER='your-docker-user'
 export DOCKER_ROOT='/home/your-docker-user'
 ```
 
+Each backup job also requires its own secrets file (e.g., `jobs/seafile.secrets`) containing the `BORG_PASSPHRASE`:
+
+```bash
+export BORG_PASSPHRASE='your-borg-passphrase'
+```
+
 Similarly, each backup job is expected to source the `BORG_PASSPHRASE` variable from its own secrets file.
 
 ### 4. Dependencies
@@ -110,7 +100,7 @@ Ensure the following tools are installed:
 - jq (for JSON parsing)
 - sshpass (for SSH authentication)
 - wakeonlan (for Wake-on-LAN functionality)
-- Docker (for container management)
+- Docker (for container management) / optional
 
 Wake-on-LAN functionality requires that the backup hosts support WOL and are configured accordingly. Additionally, static ARP entries may be needed to ensure ARP resolution works correctly, even if the target host is powered off.
 
@@ -125,7 +115,20 @@ mkdir -p /run/borg/wol
 
 ### 6. Cron Integration
 
-Install cron jobs for automated execution, e.g., by symlinking the cron configuration files to your system's cron directory.
+Install cron jobs for automated execution. The main script now validates frequency parameters:
+
+```bash
+# Example: Daily backups at 2 AM
+0 2 * * * /path/to/borg-backup-scripts/borg/borg-run.sh daily
+
+# Example: Weekly backups on Sunday at 3 AM
+0 3 * * 0 /path/to/borg-backup-scripts/borg/borg-run.sh weekly
+
+# Example: Monthly backups on the 1st at 4 AM
+0 4 1 * * /path/to/borg-backup-scripts/borg/borg-run.sh monthly
+```
+
+Alternatively, symlink the provided cron configuration files to your system's cron directory.
 
 ## Environment Variables
 
@@ -133,8 +136,9 @@ Install cron jobs for automated execution, e.g., by symlinking the cron configur
 - `BACKUP_LOG_FILE`: Main log file path
 - `BACKUP_LOG_FILE_TEMP`: Temporary log file for cron output
 - `BACKUP_WOL_STATE_DIR`: Directory for Wake-on-LAN state files
-- `BACKUP_LOG_VERBOSE`: Enable verbose logging
-- `BACKUP_SCHEDULED_JOB`: Indicates scheduled execution
+- `BACKUP_LOG_VERBOSE`: Enable verbose logging (auto-configured based on `BACKUP_SCHEDULED_JOB`)
+- `BACKUP_SCHEDULED_JOB`: Indicates scheduled execution (controls verbosity)
+- `BORG_HOST_CONFIG`: Path to host configuration JSON file (auto-configured)
 
 ### Per-Host Variables (injected by foreach_backup_host)
 - `BACKUP_HOST`: Current backup host hostname
@@ -143,13 +147,6 @@ Install cron jobs for automated execution, e.g., by symlinking the cron configur
 - `BORG_RSH`: SSH command for Borg operations
 - `BACKUP_REPO_ROOT`: Root directory for Borg repositories
 - `BORG_REPO`: Complete repository URL (when REPOSITORY_NAME is set)
-
-## Security Considerations
-
-- The `borg.hosts.json` and `*.secrets` files are automatically excluded from version control via `.gitignore`
-- SSH authentication is handled through sshpass with password files
-- Wake-on-LAN MAC addresses and internal hostnames are considered sensitive information
-- Log files may contain sensitive information and should be properly secured
 
 ## Error Handling
 
