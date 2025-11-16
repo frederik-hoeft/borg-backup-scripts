@@ -330,7 +330,11 @@ foreach_backup_host() {
         fi
         
         # execute the command
-        "${cmd}" "${args[@]+"${args[@]}"}"
+        if [ ${#args[@]} -gt 0 ]; then
+            "${cmd}" "${args[@]}"
+        else
+            "${cmd}"
+        fi
         local rc=$?
         
         # clean up environment variables
