@@ -23,18 +23,18 @@ docker_down "${container_name}" "${container_root}" || abort_current
 info 'Starting backup'
 
 export REPOSITORY_NAME="${container_name}"
-foreach_backup_host /usr/bin/borg create        \
-    --verbose                                   \
-    --filter AME                                \
-    --list                                      \
-    --stats                                     \
-    --compression lz4                           \
-    --exclude-caches                            \
-    --exclude '*/logs/*'                        \
-    --exclude '*/seafile-data/httptmp/*'        \
-    --exclude '*/seafile-data/tmpfiles/*'       \
-                                                \
-    ::"${container_name}-{now}"                 \
+foreach_backup_host --capture=yes /usr/bin/borg create  \
+    --verbose                                           \
+    --filter AME                                        \
+    --list                                              \
+    --stats                                             \
+    --compression lz4                                   \
+    --exclude-caches                                    \
+    --exclude '*/logs/*'                                \
+    --exclude '*/seafile-data/httptmp/*'                \
+    --exclude '*/seafile-data/tmpfiles/*'               \
+                                                        \
+    ::"${container_name}-{now}"                         \
     "${volume_root}" || {
         restore_current
         abort_current
@@ -42,12 +42,12 @@ foreach_backup_host /usr/bin/borg create        \
 
 info 'Pruning repository'
 
-foreach_backup_host /usr/bin/borg prune         \
-    --list                                      \
-    --glob-archives "${container_name}-*"       \
-    --show-rc                                   \
-    --keep-daily    7                           \
-    --keep-weekly   4                           \
+foreach_backup_host --capture=yes /usr/bin/borg prune   \
+    --list                                              \
+    --glob-archives "${container_name}-*"               \
+    --show-rc                                           \
+    --keep-daily    7                                   \
+    --keep-weekly   4                                   \
     --keep-monthly  6 || {
         restore_current
         abort_current
@@ -56,7 +56,7 @@ foreach_backup_host /usr/bin/borg prune         \
 # actually free repo disk space by compacting segments
 info 'Compacting repository'
 
-foreach_backup_host /usr/bin/borg compact || {
+foreach_backup_host --capture=yes /usr/bin/borg compact || {
     restore_current
     abort_current
 }

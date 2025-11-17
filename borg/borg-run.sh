@@ -20,6 +20,45 @@ case "${BACKUP_FREQUENCY}" in
         ;;
 esac
 
+# validate that all required tools are installed
+validate_required_tools() {
+    local missing_tools=()
+    local required_tools=(
+        "/usr/bin/realpath"
+        "/usr/bin/dirname" 
+        "/usr/bin/truncate"
+        "/usr/bin/tee"
+        "/usr/bin/cat"
+        "/usr/bin/jq"
+        "/usr/bin/borg"
+        "/usr/bin/nc"
+        "/usr/bin/wakeonlan"
+        "/usr/bin/getent"
+        "/usr/bin/awk"
+        "/usr/bin/sshpass"
+        "/usr/bin/ssh"
+        "/usr/bin/su"
+        "/usr/bin/docker"
+        "/usr/bin/ping"
+    )
+    
+    for tool in "${required_tools[@]}"; do
+        if ! command -v "$tool" > /dev/null 2>&1; then
+            missing_tools+=("$tool")
+        fi
+    done
+    
+    if [ ${#missing_tools[@]} -gt 0 ]; then
+        echo "ERROR: The following required tools are missing:"
+        printf '  - %s\n' "${missing_tools[@]}"
+        echo "Please install the missing tools before running this script."
+        exit 1
+    fi
+}
+
+# validate required tools before proceeding
+validate_required_tools
+
 # the directory of this script
 export BACKUP_SCRIPT_HOME="$(/usr/bin/realpath "$(/usr/bin/dirname "${BASH_SOURCE[0]}")")"
 # the directory of the jobs to run
@@ -44,7 +83,7 @@ fi
 mkdir -p "${BACKUP_WOL_STATE_DIR}"
 
 # see if remote hosts are up
-foreach_backup_host borg_poke_backup_host || try_panic $?
+foreach_backup_host --capture=no borg_poke_backup_host || try_panic $?
 
 info 'Ok. Proceeding with backup...'
 
