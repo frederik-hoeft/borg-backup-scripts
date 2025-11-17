@@ -29,9 +29,8 @@ info 'Starting backup'
 export REPOSITORY_NAME="${container_name}"
 
 foreach_backup_host --capture=yes /usr/bin/borg create  \
-    --verbose                                           \
+    --show-rc                                           \
     --filter AME                                        \
-    --list                                              \
     --stats                                             \
     --compression zlib                                  \
     --exclude-caches                                    \
@@ -54,7 +53,7 @@ foreach_backup_host --capture=yes /usr/bin/borg prune   \
     --glob-archives "${container_name}-*"               \
     --show-rc                                           \
     --keep-daily    30                                  \
-    --keep-weekly   6                                   \
+    --keep-weekly   12                                  \
     --keep-monthly  12 || {
         restore_current
         abort_current
@@ -63,7 +62,7 @@ foreach_backup_host --capture=yes /usr/bin/borg prune   \
 # actually free repo disk space by compacting segments
 info 'Compacting repository'
 
-foreach_backup_host --capture=yes /usr/bin/borg compact || {
+foreach_backup_host --capture=yes /usr/bin/borg compact --show-rc || {
     restore_current
     abort_current
 }

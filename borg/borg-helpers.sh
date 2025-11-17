@@ -317,7 +317,7 @@ _parse_capture_param() {
     elif _is_falsish "$capture_value"; then
         CAPTURE_ENABLED=0
     else
-        error "foreach_backup_host: invalid --capture value '$capture_value'. Must be one of: ${TRUISH[*]} ${falsish[*]}"
+        error "foreach_backup_host: invalid --capture value '$capture_value'. Must be one of: ${truish[*]} ${falsish[*]}"
         return 1
     fi
     
@@ -326,7 +326,7 @@ _parse_capture_param() {
 
 # executes the supplied command for each borg backup host defined in the borg host config json file
 # parameters:
-#   $1: --capture=value (mandatory, where value is from TRUISH or FALSISH arrays)
+#   $1: --capture=value (mandatory, where value is from truish or falsish arrays)
 #   $2: command to execute
 #   $@: additional arguments to pass to the command
 # environment variables:

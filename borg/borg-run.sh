@@ -25,7 +25,7 @@ validate_required_tools() {
     local missing_tools=()
     local required_tools=(
         "/usr/bin/realpath"
-        "/usr/bin/dirname" 
+        "/usr/bin/dirname"
         "/usr/bin/truncate"
         "/usr/bin/tee"
         "/usr/bin/cat"
