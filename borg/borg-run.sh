@@ -43,7 +43,7 @@ validate_required_tools() {
     )
     
     for tool in "${required_tools[@]}"; do
-        if ! command -v "$tool" > /dev/null 2>&1; then
+        if [ ! -x "$tool" ]; then
             missing_tools+=("$tool")
         fi
     done
