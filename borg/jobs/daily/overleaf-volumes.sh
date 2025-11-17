@@ -3,8 +3,9 @@
 # set bash options, fail on unset variables, and pipefail
 set -uo pipefail
 
+this_script_dir="$(/usr/bin/realpath "$(/usr/bin/dirname "${BASH_SOURCE[0]}")")"
 . "${BACKUP_SCRIPT_HOME}/borg-helpers.sh" || exit 2
-. "${BACKUP_SCRIPT_JOBS}/overleaf.secrets" || abort_current
+. "${this_script_dir}/overleaf.secrets" || abort_current
 
 require_borg_passphrase
 
