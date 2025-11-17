@@ -225,8 +225,9 @@ borg_poke_backup_host() {
         error "${BACKUP_HOST} is unreachable via ssh"
         exit 3
     fi
-    info "${BACKUP_HOST} is reachable on port ${BACKUP_PORT}."
-    echo "${wake_on_lan}" > "${BACKUP_WOL_STATE_DIR}/${BACKUP_HOST}.wol-state"
+    local wol_state_file="${BACKUP_WOL_STATE_DIR}/${BACKUP_HOST}.wol-state"
+    info "${BACKUP_HOST} is reachable on port ${BACKUP_PORT}. ${wol_state_file} --> ${wake_on_lan}"
+    echo "${wake_on_lan}" > "${wol_state_file}"
 }
 
 # helper function to extract a field from JSON host configuration
