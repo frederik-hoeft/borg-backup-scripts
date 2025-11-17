@@ -1,3 +1,6 @@
+falsish=('No' 'NO' 'no' 'N' 'n' '0')
+truish=('Yes' 'YES' 'yes' 'Y' 'y' '1')
+
 # formats a message into a log entry
 # parameters:
 #   $1: log level
@@ -179,7 +182,7 @@ borg_poke_backup_host() {
     info "Checking if ${BACKUP_HOST} is up..."
     local wake_on_lan=0
 
-    if ! ping -c 1 -W 10 "${BACKUP_HOST}" > /dev/null; then
+    if ! /usr/bin/ping -c 1 -W 10 "${BACKUP_HOST}" > /dev/null; then
         warn "${BACKUP_HOST} is unreachable! Attempting Wake on LAN."
         local backup_host_ip
         local rc
@@ -222,8 +225,10 @@ borg_poke_backup_host() {
         error "${BACKUP_HOST} is unreachable via ssh"
         exit 3
     fi
+    local wol_state_file="${BACKUP_WOL_STATE_DIR}/${BACKUP_HOST}.wol-state"
     info "${BACKUP_HOST} is reachable on port ${BACKUP_PORT}."
-    echo "${wake_on_lan}" > "${BACKUP_WOL_STATE_DIR}/${BACKUP_HOST}.wol-state"
+    echo "${wake_on_lan}" > "${wol_state_file}"
+    info "${wol_state_file} --> ${wake_on_lan}"
 }
 
 # helper function to extract a field from JSON host configuration
@@ -252,9 +257,77 @@ _extract_host_field() {
     echo "${value}"
 }
 
+# validates if a value is in the truish array
+# parameters:
+#   $1: value to check
+# returns:
+#   0 if value is truish, 1 otherwise
+_is_truish() {
+    local value="$1"
+    local item
+    for item in "${truish[@]}"; do
+        if [ "$item" = "$value" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# validates if a value is in the falsish array
+# parameters:
+#   $1: value to check
+# returns:
+#   0 if value is falsish, 1 otherwise
+_is_falsish() {
+    local value="$1"
+    local item
+    for item in "${falsish[@]}"; do
+        if [ "$item" = "$value" ]; then
+            return 0
+        fi
+    done
+    return 1
+}
+
+# validates and parses the --capture parameter
+# parameters:
+#   $1: the --capture=value argument
+# returns:
+#   0 if valid, 1 otherwise, and sets CAPTURE_ENABLED variable
+_parse_capture_param() {
+    local capture_arg="$1"
+    
+    # check if argument starts with --capture=
+    if [[ ! "$capture_arg" =~ ^--capture=.+ ]]; then
+        error "foreach_backup_host: first argument must be --capture=value"
+        return 1
+    fi
+    
+    # extract the value after =
+    local capture_value="${capture_arg#--capture=}"
+    
+    if [ -z "$capture_value" ]; then
+        error "foreach_backup_host: --capture= requires a value"
+        return 1
+    fi
+    
+    # validate the capture value
+    if _is_truish "$capture_value"; then
+        CAPTURE_ENABLED=1
+    elif _is_falsish "$capture_value"; then
+        CAPTURE_ENABLED=0
+    else
+        error "foreach_backup_host: invalid --capture value '$capture_value'. Must be one of: ${truish[*]} ${falsish[*]}"
+        return 1
+    fi
+    
+    return 0
+}
+
 # executes the supplied command for each borg backup host defined in the borg host config json file
 # parameters:
-#   $1: command to execute
+#   $1: --capture=value (mandatory, where value is from truish or falsish arrays)
+#   $2: command to execute
 #   $@: additional arguments to pass to the command
 # environment variables:
 #   BORG_HOST_CONFIG: path to the JSON config file (required)
@@ -265,7 +338,19 @@ _extract_host_field() {
 #   exit code of the first failed command, or 0 if all succeed
 foreach_backup_host() {
     if [ $# -eq 0 ]; then
-        error 'foreach_backup_host: no command specified'
+        error 'foreach_backup_host: no arguments specified'
+        return 1
+    fi
+    
+    # parse and validate the mandatory --capture parameter
+    local CAPTURE_ENABLED
+    if ! _parse_capture_param "$1"; then
+        return 1
+    fi
+    shift
+    
+    if [ $# -eq 0 ]; then
+        error 'foreach_backup_host: no command specified after --capture parameter'
         return 1
     fi
     
@@ -336,10 +421,20 @@ foreach_backup_host() {
         fi
         
         # execute the command
-        if [ ${#args[@]} -gt 0 ]; then
-            "${cmd}" "${args[@]}"
+        if [ "${CAPTURE_ENABLED}" -eq 1 ]; then
+            # use capture function for output logging
+            if [ ${#args[@]} -gt 0 ]; then
+                capture "${cmd}" "${args[@]}"
+            else
+                capture "${cmd}"
+            fi
         else
-            "${cmd}"
+            # execute directly without capture
+            if [ ${#args[@]} -gt 0 ]; then
+                "${cmd}" "${args[@]}"
+            else
+                "${cmd}"
+            fi
         fi
         local rc=$?
         
