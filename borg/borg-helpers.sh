@@ -337,9 +337,9 @@ foreach_backup_host() {
         
         # execute the command
         if [ ${#args[@]} -gt 0 ]; then
-            "${cmd}" "${args[@]}"
+            capture "${cmd}" "${args[@]}"
         else
-            "${cmd}"
+            capture "${cmd}"
         fi
         local rc=$?
         

@@ -3,8 +3,8 @@
 # set bash options, fail on unset variables, and pipefail
 set -uo pipefail
 
-. "${BACKUP_SCRIPT_HOME}/borg-helpers.sh"
-. "${BACKUP_SCRIPT_JOBS}/overleaf.secrets"
+. "${BACKUP_SCRIPT_HOME}/borg-helpers.sh" || exit 2
+. "${BACKUP_SCRIPT_JOBS}/overleaf.secrets" || abort_current
 
 require_borg_passphrase
 
@@ -27,20 +27,20 @@ info 'Starting backup'
 
 export REPOSITORY_NAME="${container_name}"
 
-capture foreach_backup_host /usr/bin/borg create    \
-    --verbose                                       \
-    --filter AME                                    \
-    --list                                          \
-    --stats                                         \
-    --compression zlib                              \
-    --exclude-caches                                \
-    --exclude '*/mongo/diagnostic.data/*'           \
-    --exclude '*/sharelatex/tmp/*'                  \
-    --exclude '*/sharelatex/data/cache/*'           \
-    --exclude '*/sharelatex/data/compiles/*'        \
-    --exclude '*/sharelatex/data/output/*'          \
-                                                    \
-    ::"${container_name}-{now}"                     \
+foreach_backup_host /usr/bin/borg create        \
+    --verbose                                   \
+    --filter AME                                \
+    --list                                      \
+    --stats                                     \
+    --compression zlib                          \
+    --exclude-caches                            \
+    --exclude '*/mongo/diagnostic.data/*'       \
+    --exclude '*/sharelatex/tmp/*'              \
+    --exclude '*/sharelatex/data/cache/*'       \
+    --exclude '*/sharelatex/data/compiles/*'    \
+    --exclude '*/sharelatex/data/output/*'      \
+                                                \
+    ::"${container_name}-{now}"                 \
     "${volume_root}" || {
         restore_current
         abort_current
@@ -48,7 +48,7 @@ capture foreach_backup_host /usr/bin/borg create    \
 
 info 'Pruning repository'
 
-capture foreach_backup_host /usr/bin/borg prune \
+foreach_backup_host /usr/bin/borg prune         \
     --list                                      \
     --glob-archives "${container_name}-*"       \
     --show-rc                                   \
@@ -62,7 +62,7 @@ capture foreach_backup_host /usr/bin/borg prune \
 # actually free repo disk space by compacting segments
 info 'Compacting repository'
 
-capture foreach_backup_host /usr/bin/borg compact || {
+foreach_backup_host /usr/bin/borg compact || {
     restore_current
     abort_current
 }
