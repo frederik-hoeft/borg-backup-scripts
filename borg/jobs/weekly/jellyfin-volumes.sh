@@ -24,9 +24,8 @@ info 'Starting backup'
 
 export REPOSITORY_NAME="${container_name}"
 foreach_backup_host --capture=yes /usr/bin/borg create  \
-    --verbose                                           \
+    --show-rc                                           \
     --filter AME                                        \
-    --list                                              \
     --stats                                             \
     --compression lz4                                   \
     --exclude-caches                                    \
@@ -55,7 +54,7 @@ foreach_backup_host --capture=yes /usr/bin/borg prune   \
 # actually free repo disk space by compacting segments
 info 'Compacting repository'
 
-foreach_backup_host --capture=yes /usr/bin/borg compact || {
+foreach_backup_host --capture=yes /usr/bin/borg compact --show-rc || {
     restore_current
     abort_current
 }

@@ -226,8 +226,9 @@ borg_poke_backup_host() {
         exit 3
     fi
     local wol_state_file="${BACKUP_WOL_STATE_DIR}/${BACKUP_HOST}.wol-state"
-    info "${BACKUP_HOST} is reachable on port ${BACKUP_PORT}. ${wol_state_file} --> ${wake_on_lan}"
+    info "${BACKUP_HOST} is reachable on port ${BACKUP_PORT}."
     echo "${wake_on_lan}" > "${wol_state_file}"
+    info "${wol_state_file} --> ${wake_on_lan}"
 }
 
 # helper function to extract a field from JSON host configuration
