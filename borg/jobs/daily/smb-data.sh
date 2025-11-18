@@ -15,7 +15,7 @@ restore_current() {
     service_up "${service_name}" || abort_current
 }
 require_smb_variables() {
-    if [[ -z "${SMB_USER:-}" || -z "${SMB_REPOSITORY_NAME:-}" || -z "${SMB_ROOT:-}" ]]; then
+    if [[ -z "${SMB_REPOSITORY_NAME:-}" || -z "${SMB_ROOT:-}" ]]; then
         error 'One or more required SMB variables are not set. Aborting.'
         restore_current
         abort_current
@@ -39,7 +39,7 @@ for secret_file in "${secret_files[@]}"; do
     [ -f "${secret_file}" ] || continue
     info "Processing SMB target secrets file: $(basename "${secret_file}")"
     # clear per-target variables to avoid bleed-over
-    unset SMB_USER SMB_REPOSITORY_NAME SMB_ROOT REPOSITORY_NAME BORG_PASSPHRASE
+    unset SMB_REPOSITORY_NAME SMB_ROOT REPOSITORY_NAME BORG_PASSPHRASE
     . "${secret_file}" || {
         restore_current
         abort_current

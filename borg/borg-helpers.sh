@@ -65,13 +65,34 @@ abort_all() {
 }
 
 # ensure that BORG_PASSPHRASE is set, otherwise abort current script
-# parameters: None
-# returns: exits with code 1 if BORG_PASSPHRASE is not set
+# parameters:
+#   --soft-fail (optional): if provided, function returns non-zero instead of aborting
+# returns:
+#   0 if BORG_PASSPHRASE is set
+#   1 if not set and --soft-fail provided
+#   aborts current script (exit 1) if not set and --soft-fail not provided
 require_borg_passphrase() {
+    local soft_fail=0
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --soft-fail)
+                soft_fail=1
+                ;;
+            *)
+                warn "require_borg_passphrase: unknown parameter '$1'"
+                ;;
+        esac
+        shift
+    done
+
     if [ -z "${BORG_PASSPHRASE:-}" ]; then
         error 'required variable BORG_PASSPHRASE is not set'
+        if [ ${soft_fail} -eq 1 ]; then
+            return 1
+        fi
         abort_current
     fi
+    return 0
 }
 
 # unset BORG_PASSPHRASE variable
