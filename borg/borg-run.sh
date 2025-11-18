@@ -60,7 +60,7 @@ validate_required_tools() {
 validate_required_tools
 
 # the directory of this script
-export BACKUP_SCRIPT_HOME="$(/usr/bin/realpath "$(/usr/bin/dirname "${BASH_SOURCE[0]}")")"
+export BACKUP_SCRIPT_HOME="$(/usr/bin/dirname "$(/usr/bin/realpath "${BASH_SOURCE[0]}")")"
 # the directory of the jobs to run
 export BACKUP_SCRIPT_JOBS="${BACKUP_SCRIPT_HOME}/jobs"
 

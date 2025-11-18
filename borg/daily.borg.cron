@@ -2,6 +2,6 @@
 
 export BACKUP_SCHEDULED_JOB=1
 
-BACKUP_SCRIPT_HOME="$(/usr/bin/realpath "$(/usr/bin/dirname "${BASH_SOURCE[0]}")")"
+BACKUP_SCRIPT_HOME="$(/usr/bin/dirname "$(/usr/bin/realpath "${BASH_SOURCE[0]}")")"
 
 "${BACKUP_SCRIPT_HOME}/borg-run.sh" daily
