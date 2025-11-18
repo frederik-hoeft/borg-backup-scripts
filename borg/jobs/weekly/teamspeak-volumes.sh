@@ -3,7 +3,7 @@
 # set bash options, fail on unset variables, and pipefail
 set -uo pipefail
 
-this_script_dir="$(/usr/bin/realpath "$(/usr/bin/dirname "${BASH_SOURCE[0]}")")"
+this_script_dir="$(/usr/bin/dirname "$(/usr/bin/realpath "${BASH_SOURCE[0]}")")"
 . "${BACKUP_SCRIPT_HOME}/borg-helpers.sh" || exit 2
 . "${this_script_dir}/teamspeak.secrets" || abort_current
 . "${BACKUP_SCRIPT_HOME}/modules/docker-helpers.sh" || abort_current
