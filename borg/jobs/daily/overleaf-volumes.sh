@@ -14,6 +14,7 @@ container_root="${DOCKER_ROOT}/containers/${container_name}"
 volume_root="${DOCKER_ROOT}/volumes/${container_name}"
 
 restore_current() {
+    unset_borg_passphrase
     info "Attempting to start '${container_name}' docker container group..."
     capture /usr/bin/su -c "${container_root}/bin/docker-compose up -d" "${DOCKER_USER}" || abort_current
     info "Successfully started '${container_name}' docker container group"
@@ -30,7 +31,6 @@ export REPOSITORY_NAME="${container_name}"
 
 foreach_backup_host --capture=yes /usr/bin/borg create  \
     --show-rc                                           \
-    --filter AME                                        \
     --stats                                             \
     --compression zlib                                  \
     --exclude-caches                                    \

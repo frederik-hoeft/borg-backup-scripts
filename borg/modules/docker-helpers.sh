@@ -20,7 +20,9 @@ docker_up() {
         return 1
     fi
     info "Attempting to start '${container_name}' docker container group..."
-    capture /usr/bin/su -c "/usr/bin/docker compose -f '${container_root}/docker-compose.yml' up -d" "${DOCKER_USER}"
+    capture /usr/bin/su -c "/usr/bin/docker compose -f '${container_root}/docker-compose.yml' up -d" "${DOCKER_USER}" || {
+        return 1
+    }
     info "Successfully started '${container_name}' docker container group"
     return 0
 }
@@ -46,7 +48,9 @@ docker_down() {
         return 1
     fi
     info "Attempting to stop '${container_name}' docker container group..."
-    capture /usr/bin/su -c "/usr/bin/docker compose -f '${container_root}/docker-compose.yml' down" "${DOCKER_USER}"
+    capture /usr/bin/su -c "/usr/bin/docker compose -f '${container_root}/docker-compose.yml' down" "${DOCKER_USER}" || {
+        return 1
+    }
     info "Successfully stopped '${container_name}' docker container group"
     return 0
 }
