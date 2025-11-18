@@ -15,6 +15,7 @@ container_root="${DOCKER_ROOT}/containers/${container_name}"
 volume_root="${DOCKER_ROOT}/volumes/${container_name}"
 
 restore_current() {
+    unset_borg_passphrase
     docker_up "${container_name}" "${container_root}" || abort_current
 }
 
@@ -24,7 +25,6 @@ info 'Starting backup'
 
 export REPOSITORY_NAME="${container_name}"
 foreach_backup_host --capture=yes /usr/bin/borg create  \
-    --filter AME                                        \
     --show-rc                                           \
     --stats                                             \
     --compression lz4                                   \

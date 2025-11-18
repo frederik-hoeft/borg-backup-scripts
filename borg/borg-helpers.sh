@@ -74,6 +74,12 @@ require_borg_passphrase() {
     fi
 }
 
+# unset BORG_PASSPHRASE variable
+# parameters: None
+unset_borg_passphrase() {
+    unset BORG_PASSPHRASE
+}
+
 # shutdown any backup hosts that were woken up for the backup
 # parameters: None
 borg_cleanup() {
