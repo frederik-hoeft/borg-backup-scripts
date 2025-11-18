@@ -13,7 +13,9 @@ service_up() {
         return 1
     fi
     info "Attempting to start '${service_name}' systemd service..."
-    capture /usr/bin/systemctl start "${service_name}"
+    capture /usr/bin/systemctl start "${service_name}" || {
+        return 1
+    }
     info "Successfully started '${service_name}' systemd service"
     return 0
 }
@@ -32,7 +34,9 @@ service_down() {
         return 1
     fi
     info "Attempting to stop '${service_name}' systemd service..."
-    capture /usr/bin/systemctl stop "${service_name}"
+    capture /usr/bin/systemctl stop "${service_name}" || {
+        return 1
+    }
     info "Successfully stopped '${service_name}' systemd service"
     return 0
 }

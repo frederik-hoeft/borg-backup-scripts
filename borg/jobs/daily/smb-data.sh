@@ -10,15 +10,16 @@ this_script_dir="$(/usr/bin/dirname "$(/usr/bin/realpath "${BASH_SOURCE[0]}")")"
 . "${BACKUP_SCRIPT_HOME}/borg-helpers.sh" || exit 2
 . "${BACKUP_SCRIPT_HOME}/modules/systemd-helpers.sh" || abort_current
 
-require_smb_variables() {
-    if [[ -z "${SMB_USER:-}" || -z "${SMB_REPOSTITORY_NAME:-}" || -z "${SMB_ROOT:-}" ]]; then
-        error 'One or more required SMB variables are not set. Aborting.'
-        abort_current
-    fi
-}
 restore_current() {
     unset_borg_passphrase
     service_up "${service_name}" || abort_current
+}
+require_smb_variables() {
+    if [[ -z "${SMB_USER:-}" || -z "${SMB_REPOSITORY_NAME:-}" || -z "${SMB_ROOT:-}" ]]; then
+        error 'One or more required SMB variables are not set. Aborting.'
+        restore_current
+        abort_current
+    fi
 }
 
 # iterate over all secrets files in smb-targets
@@ -38,10 +39,16 @@ for secret_file in "${secret_files[@]}"; do
     [ -f "${secret_file}" ] || continue
     info "Processing SMB target secrets file: $(basename "${secret_file}")"
     # clear per-target variables to avoid bleed-over
-    unset SMB_USER SMB_REPOSTITORY_NAME SMB_ROOT REPOSITORY_NAME BORG_PASSPHRASE
-    . "${secret_file}" || abort_current
+    unset SMB_USER SMB_REPOSITORY_NAME SMB_ROOT REPOSITORY_NAME BORG_PASSPHRASE
+    . "${secret_file}" || {
+        restore_current
+        abort_current
+    }
     require_smb_variables
-    require_borg_passphrase
+    require_borg_passphrase --soft-fail || {
+        restore_current
+        abort_current
+    }
 
     # check if SMB_ROOT exists, skip if not
     if [ ! -d "${SMB_ROOT}" ]; then
@@ -51,14 +58,14 @@ for secret_file in "${secret_files[@]}"; do
 
     info 'Starting backup'
 
-    export REPOSITORY_NAME="${SMB_REPOSTITORY_NAME}"
+    export REPOSITORY_NAME="${SMB_REPOSITORY_NAME}"
     foreach_backup_host --capture=yes /usr/bin/borg create \
         --show-rc                                          \
         --stats                                            \
         --compression zlib                                 \
         --exclude-caches                                   \
                                                            \
-        ::"${SMB_REPOSTITORY_NAME}-{now}"                 \
+        ::"${SMB_REPOSITORY_NAME}-{now}"                 \
         "${SMB_ROOT}" || {
             restore_current
             abort_current
@@ -68,7 +75,7 @@ for secret_file in "${secret_files[@]}"; do
 
     foreach_backup_host --capture=yes /usr/bin/borg prune \
         --list                                             \
-        --glob-archives "${SMB_REPOSTITORY_NAME}-*"        \
+        --glob-archives "${SMB_REPOSITORY_NAME}-*"        \
         --show-rc                                          \
         --keep-daily    30                                 \
         --keep-weekly   24                                 \
