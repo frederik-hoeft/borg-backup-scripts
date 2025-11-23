@@ -41,7 +41,7 @@ For remote hosts that need to be woken up before backup:
     ```bash
     post-up /usr/sbin/ip neighbor replace to <backup host IP> dev <egressing network interface to backup host IP> lladdr <backup host MAC>
     ```
-    Above ensures that the upstream router can correctly forward the WoL packets to the target host.
+    The above ensures that the upstream router can correctly forward the WoL packets to the target host.
 
 3. **Source Host**: Ensure `wakeonlan` package is installed and that you have a way to automatically shut down the target host after backup if desired (e.g., via SSH with command execution restricted to shutdown in `authorized_keys`). Ensure firewalls allow WoL packets and shutdown commands to reach the target host.
 
