@@ -1,6 +1,6 @@
 # Borg Backup Automation
 
-A cron-based backup automation system using BorgBackup with support for multiple remote destinations and Wake-on-LAN functionality.
+A cron-based backup automation system using BorgBackup with support for multiple remote destinations and Wake-on-LAN functionality. Intended for setups where backup target hosts and repositories stay powered down or disconnected when idle (cold backups) to reduce energy usage. The system wakes remote hosts via WoL, performs snapshot creation to repositories that may only be reachable briefly, then allows them to return to an offline or low-power state. Designed for use in home or small office environments where backup target hosts are preferred to remain off when not in use. Ensures availability on demand while minimizing energy consumption and prolonging hardware lifespan.
 
 ## Architecture
 
